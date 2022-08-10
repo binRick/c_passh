@@ -24,7 +24,7 @@
 #define THREAD_BUFFER_LINES    1000
 #define DEBUG_MEMORY
 ///////////////////////////////////////////////////////////////////////////
-#include "submodules/c_deps/submodules/debug-memory/debug_memory.h"
+#include "submodules/debug-memory/debug_memory.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -47,16 +47,13 @@
 #include <time.h>
 #include <unistd.h>
 ///////////////////////////////////////////////////////////////////////////
-#include "submodules/c_deps/submodules/assertf/assertf.h"
-#include "submodules/c_deps/submodules/bytes/bytes.h"
-#include "submodules/c_deps/submodules/c_ansi/ansi-codes/ansi-codes.h"
-#include "submodules/c_deps/submodules/c_string_buffer/include/stringbuffer.h"
-#include "submodules/c_deps/submodules/c_stringfn/include/stringfn.h"
-#include "submodules/c_deps/submodules/c_timer/include/c_timer.h"
-#include "submodules/c_deps/submodules/c_vector/include/vector.h"
-#include "submodules/c_deps/submodules/chan/src/chan.h"
-#include "submodules/c_deps/submodules/log.h/log.h"
-#include "submodules/c_deps/submodules/timestamp/timestamp.h"
+#include "submodules/ansi-codes/ansi-codes.h"
+#include "submodules/c_string_buffer/include/stringbuffer.h"
+#include "submodules/c_stringfn/include/stringfn.h"
+#include "submodules/c_timer/include/c_timer.h"
+#include "submodules/chan/src/chan.h"
+#include "submodules/log.h/log.h"
+#include "submodules/timestamp/timestamp.h"
 ///////////////////////////////////////////////////////////////////////////
 #define BUFFSIZE           (8 * 1024)
 #define DEFAULT_COUNT      0
@@ -227,7 +224,9 @@ static void *stdout_processor_manager(void *_ctx){
   assert(chan_close(chans[CHAN_TYPE_STDOUT_PROCESSOR_DONE]) == 0);
   assert(chan_send(chans[CHAN_TYPE_STDOUT_PROCESSORS_DONE], "1") == 0);
   char *dur = ct_stop("");
-  log_debug("closed channels in %s", dur);
+  if (DO_VERBOSE_LOG) {
+    log_debug("closed channels in %s", dur);
+  }
   return((void *)NULL);
 }
 
@@ -344,24 +343,26 @@ static void * stdout_processor(void *_ctx){
   }
 
   ctx->dur_ms = timestamp() - ctx->started_ts;
-  log_debug(
-    AC_RESETALL "received all stdouts | processed "
-    AC_RESETALL AC_RED "%lu buffer flushes,"
-    " "
-    AC_RESETALL AC_BLUE "%lu stdouts,"
-    " "
-    AC_RESETALL AC_MAGENTA "%lu lines,"
-    " "
-    AC_RESETALL AC_GREEN "%lu bytes in"
-    " "
-    AC_RESETALL AC_YELLOW "%lums"
-    ,
-    ctx->buffer_flushes_qty,
-    ctx->processed_qty,
-    ctx->processed_lines,
-    ctx->processed_bytes,
-    ctx->dur_ms
-    );
+  if (DO_VERBOSE_LOG) {
+    log_debug(
+      AC_RESETALL "received all stdouts | processed "
+      AC_RESETALL AC_RED "%lu buffer flushes,"
+      " "
+      AC_RESETALL AC_BLUE "%lu stdouts,"
+      " "
+      AC_RESETALL AC_MAGENTA "%lu lines,"
+      " "
+      AC_RESETALL AC_GREEN "%lu bytes in"
+      " "
+      AC_RESETALL AC_YELLOW "%lums"
+      ,
+      ctx->buffer_flushes_qty,
+      ctx->processed_qty,
+      ctx->processed_lines,
+      ctx->processed_bytes,
+      ctx->dur_ms
+      );
+  }
   assert(chan_send(chans[CHAN_TYPE_STDOUT_PROCESSOR_DONE], "1") == 0);
   return((void *)NULL);
 } /* stdout_processor */
